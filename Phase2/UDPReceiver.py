@@ -3,7 +3,7 @@
 
 # import entire socket & rdt library for use
 from socket import *
-from rdt import *
+from PIL import Image
 
 # initialize server info
 serverName = '127.0.0.1'
