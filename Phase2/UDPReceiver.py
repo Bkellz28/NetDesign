@@ -21,21 +21,46 @@ print("The receiver is ready")
 # loop receive action for server
 while True:
     # receive message from client
-    msgData= Receiver.rdt_recv(1024)
-    if '000' in msgData:
+    msgData, msgHeader = Receiver.rdt_recv(1024)
+    if msgHeader == 0:
         ## GRAB HEIGHT AND WIDTH FROM MESSAGE
         print(msgData)
         indx1 = msgData.find(',')  # index of comma between header and height
         indx2 = msgData.rfind(',') # index of comma between height and width
         endIn = len(msgData)
-        height = msgData[indx1+1:indx2]
+        height = msgData[indx1+1:indx2] # grab height number
         print("height: " + height)
         height = int(height)
-        width = msgData[indx2+1:endIn]
+        width = msgData[indx2+1:endIn]  # grab width number
         print("width: " + width)
         width = int(width)
         
+        while True:
+            # this is here  for debugging purposes, prints header and full message data
+            msgData, msgHeader = Receiver.rdt_recv(1024)
+            print('header: ' + str(msgHeader))
+            print('data: ' + str(msgData))
+            #
         # THIS IS WHERE WE CREATE EMPTY ARRAY
         # AND START RECEIVING PACKETS
+        
+        # THIS IS WHERE WE CREATE EMPTY ARRAY
+        # AND START RECEIVING PACKETS
+
+# empty array with 3 tuple?
+# a=np.empty((426,640), dtype=object)
+#for z in range(426):
+#    for y in range(640):
+#       a[z,y] = (0,0,0)
+# ABOVE is INITIALIZATION of EMPTY array
+
+# BELOW is populating it ---- need to loop it
+# packet = Receiver.rdt_recv(1024)
+# i = packet (first pixel number)
+# j = packet (second pixel number)
+# k = packet (third pixel number)
+# for z in range(426):
+#    for y in range(640):
+#       a[z,y] = (i,j,k) where i, j, k are numbers for the pixels
         
     
