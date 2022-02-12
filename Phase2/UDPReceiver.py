@@ -35,6 +35,7 @@ while True:
         print("width: " + width)
         width = int(width)
         
+        
         while True:
             # this is here  for debugging purposes, prints header and full message data
             msgData, msgHeader = Receiver.rdt_recv(1024)
@@ -44,10 +45,7 @@ while True:
         # THIS IS WHERE WE CREATE EMPTY ARRAY
         # AND START RECEIVING PACKETS
         
-        # THIS IS WHERE WE CREATE EMPTY ARRAY
-        # AND START RECEIVING PACKETS
-
-# empty array with 3 tuple?
+# array with 3 tuple?
 # a=np.empty((426,640), dtype=object)
 #for z in range(426):
 #    for y in range(640):
@@ -62,5 +60,4 @@ while True:
 # for z in range(426):
 #    for y in range(640):
 #       a[z,y] = (i,j,k) where i, j, k are numbers for the pixels
-        
-    
+
