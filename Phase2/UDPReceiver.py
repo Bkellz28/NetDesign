@@ -35,7 +35,21 @@ while True:
         print("width: " + width)
         width = int(width)
         
-        # THIS IS WHERE WE CREATE EMPTY ARRAY
-        # AND START RECEIVING PACKETS
-        
-    
+# THIS IS WHERE WE CREATE EMPTY ARRAY
+# AND START RECEIVING PACKETS
+
+# empty array with 3 tuple?
+# a=np.empty((426,640), dtype=object)
+#for z in range(426):
+#    for y in range(640):
+#       a[z,y] = (0,0,0)
+# ABOVE is INITIALIZATION of EMPTY array
+
+# BELOW is populating it ---- need to loop it
+# packet = Receiver.rdt_recv(1024)
+# i = packet (first pixel number)
+# j = packet (second pixel number)
+# k = packet (third pixel number)
+# for z in range(426):
+#    for y in range(640):
+#       a[z,y] = (i,j,k) where i, j, k are numbers for the pixels
