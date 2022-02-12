@@ -3,15 +3,11 @@
 
 # import socket library
 from socket import *
+import numpy as np
 
-
-class packet:
-    def __init__(self, data, header)
-        self.data = data
-        self.header = header
 
 class RDT:
-    def __init__(self, hostName, portNum)
+    def __init__(self, hostName, portNum):
         self.host = hostName
         self.port = portNum
         # open socket  for device
@@ -20,10 +16,14 @@ class RDT:
     # msg is data to be sent
     # header is header to be appended to packet
     # receiver is a tuple containing (receiverName, receiverPort)
-    def rdt_send(self, msgData, headerData, receiver)
-        msg = packet(msgData, headerData)
-        self.UDPsocket.sendto(msg.encode(), receiver)
+    def rdt_send(self, msgData, headerData, receiver):
+        if headerData == 0: # initial messge with imgSize
+            msgData = '000,' + msgData
+            self.UDPsocket.sendto(msgData.encode(), receiver)
         
-    def rdt_recv(self, bufSize)
+    def rdt_recv(self, bufSize):
         recvPacket, serverAddress = self.UDPsocket.recvfrom(1024)
-        return recvPacket
+        if '000' in recvPacket.decode():
+            return recvPacket.decode()
+        recvData = np.frombuffer(recvPacket, dtype = np.uint8)
+        return recvData

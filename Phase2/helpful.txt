@@ -1,0 +1,10 @@
+Image.fromarray()
+
+newData = bytearray(img)
+
+PYTHON ARRAYS
+array[height, width]
+
+HOW TO MAKE EMPTY ARRAY
+https://stackoverflow.com/questions/40709519/initialize-64-by-64-numpy-of-0-0-tuples-in-python
+*** only difference is we want 3-tuples so (0, 0, 0)
