@@ -6,6 +6,7 @@ from RDT_protocol import RDT
 from socket import *
 from PIL import Image
 import numpy as np
+import time
 
 # initialize server info
 serverName = '127.0.0.1'
@@ -29,7 +30,8 @@ while True:
     Sender.rdt_send(imgSizeMsg, 0, sendAddr) # header of 0 represents initial message
     
     numPackets = imgH * 2  # one packet is a half of a row, for smaller imgs thats 600-800 bytes
-    packetLength = (imgW / 2) * 3 # packet length is half the width of a row
+    print(str(numPackets) + ' packets to create')
+    packetLength = (imgW / 2) * 3 # packet length is half the width of a row (*3 for bytes)
     # packetLength = 4 # debugging purposes
     arrIndex = 0  # index for where in the array to grab bytes
     testtest = [254, 255, 256, 257] # if you want to test a specific range of header numbers
@@ -44,23 +46,10 @@ while True:
         Sender.rdt_send(newPacket, i+1, sendAddr)
         # increment arrIndex by the size of a packet
         arrIndex += (packetLength)
+        # send packets in bursts to ensure all packets are sent
+        if (i%100) == 0: 
+            print(str(i) + ' packets sent...') # update user
+            time.sleep(0.5)
         
-
-    ## DEBUGGING AND INITIAL TRIAL STUFF
-    ## DELETE BEFORE SUBMISSION
-    """
-    someArray = arrayImg[426,639]
-    somebArray = bArray[0:6]
-    
-    somebArrayConv = np.frombuffer(somebArray, dtype = np.uint8)
-    print('orig w: ' + str(w) + ', h: ' + str(h))
-    print('byt array len: ' + str(length))
-    print('1 int in array example: ' + str(someArray))
-    print('1 in byt array example: ' + str(somebArrayConv))
-    # newData = "w: " + str(w) + ", h: " + str(h)
-    sendAddr = (serverName, serverPort)
-    newData = somebArray
-    Sender.rdt_send(newData, 420, sendAddr)
-    """
-    
+    print('All packets sent!')
     

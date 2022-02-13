@@ -24,40 +24,56 @@ while True:
     msgData, msgHeader = Receiver.rdt_recv(1024)
     if msgHeader == 0:
         ## GRAB HEIGHT AND WIDTH FROM MESSAGE
-        print(msgData)
+        print('Initial image send message received: ' + msgData)
         indx1 = msgData.find(',')  # index of comma between header and height
         indx2 = msgData.rfind(',') # index of comma between height and width
         endIn = len(msgData)
         height = msgData[indx1+1:indx2] # grab height number
-        print("height: " + height)
         height = int(height)
         width = msgData[indx2+1:endIn]  # grab width number
-        print("width: " + width)
         width = int(width)
         
+        # create empty array for image
+        a = np.empty((height, width), dtype = object)
+        for z in range(height):
+            for y in range(width):
+                a[z,y] = (0, 0, 0)
+        print(str(height) + 'x' + str(width) + ' array initialized')
         
+        numPacketsComing = height * 2
+        progressTicker = 0
         while True:
             # this is here  for debugging purposes, prints header and full message data
             msgData, msgHeader = Receiver.rdt_recv(1024)
-            print('header: ' + str(msgHeader))
-            print('data: ' + str(msgData))
-            #
-        # THIS IS WHERE WE CREATE EMPTY ARRAY
-        # AND START RECEIVING PACKETS
-        
-# array with 3 tuple?
-# a=np.empty((426,640), dtype=object)
-#for z in range(426):
-#    for y in range(640):
-#       a[z,y] = (0,0,0)
-# ABOVE is INITIALIZATION of EMPTY array
-
-# BELOW is populating it ---- need to loop it
-# packet = Receiver.rdt_recv(1024)
-# i = packet (first pixel number)
-# j = packet (second pixel number)
-# k = packet (third pixel number)
-# for z in range(426):
-#    for y in range(640):
-#       a[z,y] = (i,j,k) where i, j, k are numbers for the pixels
+            # row to insert to is headerNum/2
+            rowNum = (msgHeader // int(2)) - 1
+            # odd header is first half of row, even is last half
+            if msgHeader%2 == 0:
+                colNum = width / 2 #last half will start at halfway through row
+            else:
+                colNum = 0 # otherwise start at beginning of row
+            
+            numPixels = int(width/2) # number of pixels in packet is half a row
+            arrInd = 0 # array index starting at 0
+            for i in range(numPixels):
+                # grab RGB values
+                R = msgData[arrInd]
+                G = msgData[arrInd+1]
+                B = msgData[arrInd+2]
+                # insert values into array a
+                a[int(rowNum), int(colNum+i)] = (R, G, B)
+                # increment arrInd
+                arrInd += 3
+                
+            progressTicker += 1 # increment progress ticker for console updates
+            # update user around every hundred packets
+            if progressTicker >= 100: # update user that packets are being received
+                print(str(msgHeader) + ' packets received...')
+                progressTicker = 0
+            elif msgHeader == numPacketsComing: 
+                break # leave while loop once all packets received
+                
+        print('All packets received!')
+        receivedImg = Image.fromarray(a, mode='RGB')
+        receivedImg.show() # show our received image!
 
