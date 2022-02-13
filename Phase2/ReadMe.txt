@@ -32,4 +32,4 @@
    | 
 5. | Run both programs
    | 
-6. | Type path for image
+6. | Type image name with the file type
