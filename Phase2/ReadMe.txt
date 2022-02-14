@@ -3,7 +3,7 @@
 ## ----- Ben Kelley -- JJ Hyde ----- ##
 ## -- David Nguyen-- Liam Sweeney -- ##
 ## --------------------------------- ##
-## ----------- Files: 03 ----------- ##
+## ----------- Files: 04----------- ##
 
  FILE DESCRIPTION
 -----------------------------
@@ -19,7 +19,9 @@
 3. | image.bmp
    | Image that is being sent and received.
    | 
-   
+4. | RDT_protocol.py:
+   | This file handles the sending and receiving packets with headers
+
  STEPS TO EXECUTE
 -----------------------------
 1. | Open both programs (UDPSender.py & UDPReceiver.py)
