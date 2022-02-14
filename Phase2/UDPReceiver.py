@@ -6,6 +6,7 @@ from RDT_protocol import RDT
 from socket import *
 from PIL import Image
 import numpy as np
+import cv2 as cv
 
 # initialize server info
 serverName = '127.0.0.1'
@@ -32,6 +33,33 @@ while True:
         height = int(height)
         width = msgData[indx2+1:endIn]  # grab width number
         width = int(width)
+        numPack = width
+        print(str(numPack))
+        numReceived = 0
+        recvList = []
+        while True:
+            msgData, msgHead = Receiver.UDPsocket.recvfrom(1024)
+            numReceived += 1
+            recvList.append(msgData)
+            # print(str(msgData))
+            # print(str(msgHead))
+            if numReceived%50 == 0:
+                print(str(numReceived))
+            if numReceived == numPack:
+                break
+            
+        
+        print('finished receiving')
+        newImg = recvList[0]
+        print(len(recvList))
+        for i in range(1, len(recvList)):
+            newImg = newImg + recvList[i]
+                
+        img = np.asarray(bytearray(newImg), dtype = np.uint8)
+        img = cv.imdecode(img, cv.IMREAD_COLOR)
+        cv.imwrite("result.bmp", img)
+        # cv.imshow('img', img)
+        '''
         
         # create empty array for image
         a = np.empty((height, width), dtype = object)
@@ -76,4 +104,7 @@ while True:
         print('All packets received!')
         receivedImg = Image.fromarray(a, mode='RGB')
         receivedImg.show() # show our received image!
+        '''
+        
+    
 

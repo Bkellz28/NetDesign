@@ -18,17 +18,42 @@ Sender = RDT(serverName, serverPort)
 while True:
     # prompt input and send message to socket
     filePath = input('Input path of image file: ')
-    img = Image.open(filePath) # open img
-    arrayImg = np.asarray(img) # convert img to array of 3-tuples (RGB  vals)
-    bArray = bytearray(arrayImg) # convert RGB array to byte array
-    imgW, imgH = img.size # get size of img
-    length = len(bArray) # get length of byte array (should be w*h*3)
-    
+    img = open(filePath, 'rb') # open img
+    imgData = img.read()
+    # arrayImg = np.asarray(img) # convert img to array of 3-tuples (RGB  vals)
+    # bArray = bytearray(arrayImg) # convert RGB array to byte array
+    # imgW, imgH = img.size # get size of img
+    length = len(imgData) # get length of byte array (should be w*h*3)
+    print(str(length//int(1024)))
     ## CREATE INITIAL MESSAGE WHICH CONTAINS IMG SIZE
-    imgSizeMsg = str(imgH) + ',' + str(imgW)
+    numPack = length//int(1024)
+    # imgSizeMsg = str(imgH) + ',' + str(imgW)
+    # print(imgSizeMsg)
     sendAddr = (serverName, serverPort)
-    Sender.rdt_send(imgSizeMsg, 0, sendAddr) # header of 0 represents initial message
     
+    
+    if (length%1024 != 0):
+        numPack += 1
+    imgSizeMsg = str(numPack) + ',' + str(numPack) 
+    Sender.rdt_send(imgSizeMsg, 0, sendAddr) # header of 0 represents initial message
+    print(str(length))
+    
+    sendList = []
+    for i in range(numPack):
+        msg = imgData[i*1024:(i+1)*1024]
+        sendList.append(msg)
+        # Sender.rdt_send(msg, i+1, sendAddr)
+        #if i%100 == 0:
+        #    time.sleep(0.5)
+    
+    
+    print(len(sendList))
+    for i in range(len(sendList)):
+        sendMsg = sendList[i]
+        Sender.UDPsocket.sendto(sendMsg, sendAddr)
+    
+    print('all sent')
+    """
     numPackets = imgH * 2  # one packet is a half of a row, for smaller imgs thats 600-800 bytes
     print(str(numPackets) + ' packets to create')
     packetLength = (imgW / 2) * 3 # packet length is half the width of a row (*3 for bytes)
@@ -52,4 +77,5 @@ while True:
             time.sleep(0.5)
         
     print('All packets sent!')
+    """
     

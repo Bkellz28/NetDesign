@@ -45,5 +45,6 @@ class RDT:
             recvHeader = packetData[0]*255 + packetData[1]
             # all but first two bytes are data
             recvData = packetData[2:packLen]
+            # recvData = recvPacket[2:packLen]
         # return header and data
         return recvData, recvHeader
