@@ -49,16 +49,19 @@ while True:
                 break
             
         
-        print('finished receiving')
+        print('Finished Receiving.')
         newImg = recvList[0]
-        print(len(recvList))
+        print("Final packet number: " )
+        print(len(recvList))  # Final packet number
         for i in range(1, len(recvList)):
             newImg = newImg + recvList[i]
-                
-        img = np.asarray(bytearray(newImg), dtype = np.uint8)
+
+        img = np.asarray(bytearray(newImg), dtype=np.uint8)
         img = cv.imdecode(img, cv.IMREAD_COLOR)
-        cv.imwrite("result.bmp", img)
-        # cv.imshow('img', img)
+        cv.imwrite("result.bmp", img)  # Creating a name for the copied over file
+        cv.imshow('result.bmp', img)  # Opening the picture in a new pop-up window
+        cv.waitKey()  # Necessary for cv.imshow
+        
         '''
         
         # create empty array for image
