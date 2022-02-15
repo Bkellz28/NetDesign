@@ -3,7 +3,7 @@
 ## ----- Ben Kelley -- JJ Hyde ----- ##
 ## -- David Nguyen-- Liam Sweeney -- ##
 ## --------------------------------- ##
-## ----------- Files: 04----------- ##
+## ----------- Files: 05----------- ##
 
  FILE DESCRIPTION
 -----------------------------
@@ -21,6 +21,10 @@
    | 
 4. | RDT_protocol.py:
    | This file handles the sending and receiving packets with headers
+   |
+5. | result.bmp
+   | This file is made once the server receives the image and rebuilds it as result.bmp
+   |
 
  STEPS TO EXECUTE
 -----------------------------
