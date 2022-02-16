@@ -1,4 +1,6 @@
 # import socket library
+from socket import *
+import time
 
 class RDT:
     def __init__(self, hostName, portNum):
@@ -7,38 +9,46 @@ class RDT:
         # open socket  for device
         self.UDPsocket = socket(AF_INET, SOCK_DGRAM)
 
-    # msg is data to be sent
-    # header is header to be appended to packet
-    # receiver is a tuple containing (receiverName, receiverPort)
-    def rdt_send(self, msgData, headerData, receiver):
-        if headerData == 0:  # initial messge with imgSize
-            msgData = '000,' + msgData
-            self.UDPsocket.sendto(msgData.encode(), receiver)
-        else:  # need to append header to bytes
-            # header is packet number expressed using two bytes
-            # the first byte is packetNum/255 and the second is the remainder of packetNum/255
-            firstByte = headerData // 255
-            secondByte = headerData % 255
-            # append bytes to data and send
-            header = bytearray()  # create header
-            header.append(firstByte)  # add the first
-            header.append(secondByte)  # and second byte to the header
-            fullPacket = header + msgData  # append data to end of header for full packet
-            self.UDPsocket.sendto(fullPacket, receiver)  # send full packet
+    # data file to be sent 
+    def rdt_send(self, sendData, receiver):
+        # calc num packets, length of data / 1024 bytes
+        length = len(sendData);
+        numPack = length // int(1024)
+        if (length % 1024 != 0): # add extra packet for leftover
+            numPack += 1
+        # send initial message to receiver alerting how many packets to expect
+        numPackMsg = 'packets:' + str(numPack)
+        self.UDPsocket.sendto(numPackMsg.encode(), receiver)
+        print(str(numPack) + ' packets to send...')
+        sendList = [] # initialize list of packets to send
+        for i in range(numPack):
+            packStart = i*1024   # starting index for packet
+            packEnd = (i+1)*1024 # ending index for packet
+            msg = sendData[packStart:packEnd] # parse packet
+            sendList.append(msg) # add packet to list
+        for i in range(len(sendList)):
+            sendMsg = sendList[i] # grab packet
+            self.UDPsocket.sendto(sendMsg, receiver) # send packet
 
-    def rdt_recv(self, bufSize):
-        recvPacket, serverAddress = self.UDPsocket.recvfrom(1024)  # receive packet
-        try:  # try to decode it to ascii WILL NOT WORK for typical byte data
-            recvData = recvPacket.decode('ascii')  # will work for initial string message
-            recvHeader = 0
-        except:  # otherwise we're dealing with bytes
-            # convert bytes to number array
-            packetData = np.frombuffer(recvPacket, dtype=np.uint8)
-            packLen = len(packetData)
-            # calculate header from first two bytes
-            recvHeader = packetData[0] * 255 + packetData[1]
-            # all but first two bytes are data
-            recvData = packetData[2:packLen]
-            # recvData = recvPacket[2:packLen]
-        # return header and data
-        return recvData, recvHeader
+    def rdt_recv(self):
+        recvHead, serverAddress = self.UDPsocket.recvfrom(1024)  # receive initial msg
+        header = recvHead.decode()
+        indx = header.rfind(':') # index of colon between "packet" and numPack
+        endIn = len(header)
+        numPack = int(header[indx+1:endIn]) # grab numPack
+        print(str(numPack) + ' packets incoming...')
+        recvNum = 0 # initialize number of packets received
+        packetsReceived = [] # initialize list of received packets
+        while True:
+            msgData, serverAddress = self.UDPsocket.recvfrom(1024)
+            recvNum += 1
+            packetsReceived.append(msgData) # add packet to list of packets
+            if recvNum % 100 == 0: # update user on packets
+                print(str(recvNum) + ' packets received...')
+            if recvNum == numPack: # break loop if all packets received
+                break
+        print('All packets received!')
+        dataReceived = packetsReceived[0] # initialize reconstructed data
+        for i in range(1, len(packetsReceived)):
+            dataReceived += packetsReceived[i] # construct packets back into data array
+        return dataReceived # return data
