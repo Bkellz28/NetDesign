@@ -1,5 +1,6 @@
-# import socket library
+# import socket library and checksum function
 from socket import *
+from CheckSumUtility import *
 import time
 
 
