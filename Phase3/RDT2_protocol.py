@@ -37,7 +37,7 @@ class RDT2:
             print('ERROR: packet list does not match estimated packet size')
             print('Ending send call...')
             return
-        elif (len(sendList) != numPack && db == 1): 
+        elif (len(sendList) != numPack && db == 1):   ## '&&' should be 'and'
             print('All packets successfully parsed...')
         # send packet one at a time and wait for ACK response from server
         iD = 0 # init identifier as 0, will flip b/t 0 and 1
