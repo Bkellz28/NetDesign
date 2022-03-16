@@ -58,18 +58,32 @@ class RDT2:
         if (db == 1): print(str(numPack) + ' packets incoming...')
         numRecv = 0
         # receive data packets and ACKnowledge reception from sender
+        iDlast = 1 # start iDlast as 1, since first packet iD will be 0
         while (recvNum != numPack):
             packet, svrAddr = self.UDPsocket.recvfrom(1028)
             # parse packet down into message, checksum, and identifier
             # first byte is identifier, next three is checksum, remainder is message
+            # iD = packet[0]   PSEUDO-CODE NEED ACTUAL IMPLEMENTATION
+            # cs = packet[1:3] PSEUDO-CODE NEED ACTUAL IMPLEMENTATION
+            # msg = packet[4:] PSEUDO-CODE NEED ACTUAL IMPLEMENTATION
+            iD = int.from_bytes(iD) # convert iD back to an integer
+            cs = bin(int(msg.hex(), 16)) # convert cs back to binary
+            recvCS = checksum(msg, cs)
 
     
 # checksum for use in send and recv
-def checksum(data):
+# function passed WITHOUT second param will return binary checksum of data
+# function passed WITH second param will compare calculated checksum with input compCS checksum
+def checksum(data, compCS = 0):
     # convert byte data to bits
     dataBits = bin(int(data.hex(), 16))
     # initialize checkSum and iterate through bits
     checkSum = 0
     for i in range(2, len(dataBits)): # start at 2 since string will start with 0b
         if dataBits[i] == '1': checkSum += 1
-    return checkSum
+    # return calculated checksum if no comparison specified
+    if (compCS == 0): return checkSum
+    else:
+        # ADD checkSum with compCS
+        # IF 0, data is good, return 1
+        # ELSE, data is corrupted, return 0
