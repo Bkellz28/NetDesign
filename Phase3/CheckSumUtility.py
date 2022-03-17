@@ -18,6 +18,7 @@ def binarySize(data, bitSize):
 # if an addition cmpSum checksum value is input as well, will return the sum of the 
 # calculated checksum and input checksum
 def checksum(data, cmpSum = 0):
+    # PART ONE: CALCULATE INITIAL CHECKSUM
     # check length and add leading zeros if necessary
     data = binarySize(data[2:], 8192)
     print(len(data))
@@ -51,25 +52,28 @@ def checksum(data, cmpSum = 0):
         # addSum is now our checkSum
         checkSum = addSum
         # time.sleep(1)
-   
     print('Pre-flip checksum:   ' + checkSum)
-    # if not comparing, flip bits for final checksum
-    # otherwise add the comparing checksum to current checksum
-    if (cmpSum == 0): # invert checkSum
-        inv = ''
-        for i in range(32):
-            if (checkSum[i] == '1'): inv += '0'
-            else: inv += '1'
-        checkSum = inv
-        print('Calculated checksum: ' + checkSum)
-    else:
+    
+    # PART TWO: ADD COMPARE CHECKSUM IF INPUT AND INVERT
+    # check if a comparison checksum was input
+    if (cmpSum != 0):
         print('Previous checksum:   ' + cmpSum)
         # calculate comparison b/t calc and input checksums
         compSum = bin(int(checkSum, 2) + int(cmpSum, 2))
         # check for carry bit
-        if (len(compSum) == 34): checkSum = compSum[2:]
-        # carry bit present, ignore it
-        else: checkSum = compSum[3:]
-        print('Compared checksum:   ' + checkSum)
+        if (len(compSum) == 34): 
+            # no carry bit, index at beginning of binary string
+            checkSum = compSum[2:]
+        else: 
+            # carry bit present, ignore it by indexing beyond it
+            checkSum = compSum[3:]
+    # INVERT BITS 
+    inv = ''
+    for i in range(32):
+        if (checkSum[i] == '1'): inv += '0'
+        else: inv += '1'
+    checkSum = inv
+    print('Calculated checksum: ' + checkSum)
+    
     return checkSum
       
