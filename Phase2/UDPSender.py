@@ -15,7 +15,7 @@ while True:
     filePath = input('Input path of image file: ')
     img = open(filePath, 'rb')  # open img
     imgData = img.read() # read data of img
-    sendAddr = (serverName, serverPort) # assign receiver
+    sendAddr = (serverName, 10421) # assign receiver
     print('Image sending...')
     Sender.rdt_send(imgData, sendAddr)
     print('Image sent!')

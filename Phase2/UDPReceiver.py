@@ -6,7 +6,7 @@ import cv2 as cv
 
 # initialize server info
 serverName = '127.0.0.1'
-serverPort = 10420
+serverPort = 10421
 # create receiver primed for reliable data transfer and bind to local port
 Receiver = RDT(serverName, serverPort)
 # leaving first param blank allows for svr to rcv from other hosts
