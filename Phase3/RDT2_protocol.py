@@ -1,12 +1,12 @@
 # import socket library and checksum function
+from Phase3.CheckSumUtility import *
 from socket import *
-from CheckSumUtility import *
 import time
 
 
 # updated RDT protocol to rdt2.3
 class RDT2:
-    def __init__(self, hostName, portNum, debugToggle):
+    def __init__(self, hostName, portNum, debugToggle = 0):
         self.host = hostName
         self.port = portNum
         # open socket for use
@@ -37,7 +37,7 @@ class RDT2:
             print('ERROR: packet list does not match estimated packet size')
             print('Ending send call...')
             return
-        elif (len(sendList) != numPack && db == 1):   ## '&&' should be 'and'
+        elif (len(sendList) != numPack and db == 1):   ## '&&' should be 'and'
             print('All packets successfully parsed...')
         # send packet one at a time and wait for ACK response from server
         iD = 0 # init identifier as 0, will flip b/t 0 and 1
@@ -61,30 +61,31 @@ class RDT2:
         # receive data packets and ACKnowledge reception from sender
         iDlast = 1 # start iDlast as 1, since first packet iD will be 0
         while (recvNum != numPack):
-            packet, svrAddr = self.UDPsocket.recvfrom(1028)
+            packet, svrAddr = self.UDPsocket.recvfrom(1029)
             # parse packet down into message, checksum, and identifier
-            # first byte is identifier, next three is checksum, remainder is message
-            # iD = packet[0]   PSEUDO-CODE NEED ACTUAL IMPLEMENTATION
-            # cs = packet[1:3] PSEUDO-CODE NEED ACTUAL IMPLEMENTATION
-            # msg = packet[4:] PSEUDO-CODE NEED ACTUAL IMPLEMENTATION
-            iD = int.from_bytes(iD) # convert iD back to an integer
-            cs = bin(int(msg.hex(), 16)) # convert cs back to binary
-            recvCS = checksum(msg, cs)
+            # first byte is identifier, next four is checksum, remainder is message
+            # grab and convert iD to int
+            iDraw = packet[0:1]
+            iD = int(iDraw.hex(), 16)
+            # grab and convert checksum to binary string
+            csRaw = packet[1:5] 
+            cs = bin(int(csRaw.hex(), 16))[2:]
+            cs = binarySize(cs, 32) # add leading zeros if needed
+            # grab message data and calculate comparison checksum
+            msg = packet[5:]
+            msgBi = bin(int(msg.hex(),16))[2:]
+            recvChecksum = checksum(msgBi, cs)
+    
+    # CREATE PACKET FUNCTION
+    # "packetizes" data and checksum into a single packet
+    # if a sequence number (sn) is input as well, it is also added to the packet
+    def packetize(self, data, cs, sn = -1):
+        # convert seq num to 1byte if one is present
+        if (sn != -1): snBy = sn.to_bytes(1, byteorder = 'big', signed = False)
+        # convert checksum to bytes
+        csBy = int(cs, 2).to_bytes(4, byteorder = 'big', signed = False)
+        # create and return full packet
+        packet = snBy + csBy + data
+        return packet
 
     
-# checksum for use in send and recv
-# function passed WITHOUT second param will return binary checksum of data
-# function passed WITH second param will compare calculated checksum with input compCS checksum
-def checksum(data, compCS = 0):
-    # convert byte data to bits
-    dataBits = bin(int(data.hex(), 16))
-    # initialize checkSum and iterate through bits
-    checkSum = 0
-    for i in range(2, len(dataBits)): # start at 2 since string will start with 0b
-        if dataBits[i] == '1': checkSum += 1
-    # return calculated checksum if no comparison specified
-    if (compCS == 0): return checkSum
-    else:
-        # ADD checkSum with compCS
-        # IF 0, data is good, return 1
-        # ELSE, data is corrupted, return 0
