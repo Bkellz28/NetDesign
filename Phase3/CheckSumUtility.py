@@ -1,6 +1,6 @@
 # Contains a checksum function which calculates a 32-bit (4 byte) checksum for a 1024 byte packet
-
 import time
+
 # adds leading zeroes to a binary string if it is not already the input bitSize
 # if data is LARGER than input bitSize, returns -1
 def binarySize(data, bitSize):

@@ -59,33 +59,43 @@ class RDT2:
         if (db == 1): print(str(numPack) + ' packets incoming...')
         numRecv = 0
         # receive data packets and ACKnowledge reception from sender
-        iDlast = 1 # start iDlast as 1, since first packet iD will be 0
+        snLast = 1 # start iDlast as 1, since first packet iD will be 0
         while (recvNum != numPack):
             packet, svrAddr = self.UDPsocket.recvfrom(1029)
             # parse packet down into message, checksum, and identifier
-            # first byte is identifier, next four is checksum, remainder is message
-            # grab and convert iD to int
-            iDraw = packet[0:1]
-            iD = int(iDraw.hex(), 16)
-            # grab and convert checksum to binary string
-            csRaw = packet[1:5] 
-            cs = bin(int(csRaw.hex(), 16))[2:]
-            cs = binarySize(cs, 32) # add leading zeros if needed
-            # grab message data and calculate comparison checksum
-            msg = packet[5:]
-            msgBi = bin(int(msg.hex(),16))[2:]
-            recvChecksum = checksum(msgBi, cs)
+            seqNum, recvCS, msgData = self.depacketize(packet)
     
     # CREATE PACKET FUNCTION
-    # "packetizes" data and checksum into a single packet
-    # if a sequence number (sn) is input as well, it is also added to the packet
-    def packetize(self, data, cs, sn = -1):
-        # convert seq num to 1byte if one is present
-        if (sn != -1): snBy = sn.to_bytes(1, byteorder = 'big', signed = False)
-        # convert checksum to bytes
+    # "packetizes" data, checksum, and seq num into a single packet
+    # first calculates the checksum of the data
+    def packetize(self, data, sn):
+        # convert seq num to 1byte
+        snBy = sn.to_bytes(1, byteorder = 'big', signed = False)
+        # convert data to bits for checksum calculation
+        dataBi = bin(int(data.hex(), 16))
+        # calculate and convert checksum to bytes
+        cs = checksum(dataBi) #calc checksum
         csBy = int(cs, 2).to_bytes(4, byteorder = 'big', signed = False)
         # create and return full packet
         packet = snBy + csBy + data
         return packet
-
+    
+    # DECONSTRUCT PACKET FUNCTION
+    # "depacketizes" data, checksum, and seq num
+    def depacketize(self, packet):
+        # grab raw pieces
+        snRaw = packet[0:1]
+        csRaw = packet[1:5]
+        msg = packet[5:]
+        # convert seq num back to integer
+        sn = int(snRaw.hex(), 16)
+        # convert received checksum to binary (cut off 0b binary string header)
+        recvCs = bin(int(csRaw.hex(), 16))[2:] # [2:] skips '0b'
+        recvCs = binarySize(recvCs, 32) # add leading 0s if needed
+        # calculate checksum of the data and compare to received checksum
+        msgBi = bin(int(msg.hex(), 16))
+        cs = checksum(msgBi, recvCs)
+        # return formatted seq num and header
+        # no need to format the msg data any further
+        return sn, cs, msg
     

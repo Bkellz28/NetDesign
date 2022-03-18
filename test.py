@@ -36,23 +36,20 @@ sendAddr = ('127.0.0.1', 10421)
 # Sender.packetize(byteData, checksum, 1)
 # Receiver.UDPsocket.recvfrom(1029)
 
-print('data: ' + str(len(byteData)))
+# print('data: ' + str(len(byteData)))
 
-packet = Sender.packetize(byteData, result, 0)
+# packetize and depacketize the same piece of data
+packet = Sender.packetize(byteData, 0)
 
 print('packet: ' + str(len(packet)))
 
-print(packet)
+# print(packet)
 print(packet[0:1])
 seqNumRaw = packet[0:1]
 print(packet[1:5])
-# seqNum = int.from_bytes(packet[0:1], byteorder = 'big', signed = False)
-seqNum = int(seqNumRaw.hex(), 16)
-print(seqNum)
 
-recvCS = bin(int(packet[1:5].hex(), 16))
-recvCS = binarySize(recvCS[2:], 32)
-print(result)
+seqNum, recvCS, recvData = Sender.depacketize(packet)
+print(seqNum)
 print(recvCS)
 
 recvData = packet[5:]
