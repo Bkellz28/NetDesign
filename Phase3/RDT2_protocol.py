@@ -1,5 +1,5 @@
 # import socket library and checksum function
-from Phase3.CheckSumUtility import *
+from CheckSumUtility import *
 from socket import *
 import time
 
@@ -40,14 +40,15 @@ class RDT2:
         elif (len(sendList) != numPack and db == 1):   ## '&&' should be 'and'
             print('All packets successfully parsed...')
         # send packet one at a time and wait for ACK response from server
-        iD = 0 # init identifier as 0, will flip b/t 0 and 1
+        sn = 0 # init identifier as 0, will flip b/t 0 and 1
         for i in range(len(sendList)):
             # grab packet and append checksum and identifier
             msg = sendList[i] # grab packet
-            cs = checksum(msg) # calculate checksum
             # Corruption needs to be implemented after this line
-            if (iD == 0): iD = 1
-            elif (iD == 1): iD = 0
+            if (sn == 0): sn = 1
+            elif (sn == 1): sn = 0
+            # create and send packet
+            packet = self.packetize(msg, sn)
             # MORE TO ADD
         
     # data file receive
