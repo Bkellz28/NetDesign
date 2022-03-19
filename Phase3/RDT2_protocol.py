@@ -148,6 +148,9 @@ class RDT2:
         # calculate and convert checksum to bytes
         cs = checksum(dataBi) #calc checksum
         csBy = int(cs, 2).to_bytes(4, byteorder = 'big', signed = False)
+        # DATA IS CORRUPTED AFTER CHECKSUM TO PROPERLY SIMULATE BIT ERROR
+        # NEED TO PUT THIS STATEMENT IN A PROPER IF STATEMENT
+        data = self.corrupt(data, 1)
         # create and return full packet
         packet = snBy + csBy + data
         return packet
@@ -170,4 +173,23 @@ class RDT2:
         # return formatted seq num and header
         # no need to format the msg data any further
         return sn, cs, msg
+    
+    # CORRUPTION FUNCTION
+    # 3 mode: 1, 2, and 3
+    # Mode 1: no corruption
+    # Mode 2: ACK packet corruption, these packets are small, < 100 byte
+    # Mode 3: data packet corruption, these packets are big, > 100 byte
+    def corrupt(self, data, mode):
+        if (mode == 2 and len(data) < 100):
+            # CONVERT DATA TO BINARY AND FLIP SOME BITS
+            # THEN CONVERT BACK TO BYTES
+            fart = 2
+        elif (mode == 3 and len(data) > 100):
+            # CONVERT DATA TO BINARY AND FLIP SOME BITS
+            # THEN CONVERT BACK TO BYTES
+            fart = 2
+        else: # mode 1 or data that doesn't match current mode
+            # no need to corrupt this data
+            corruptData = data
+        return corruptData
     
