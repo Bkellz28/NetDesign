@@ -60,10 +60,12 @@ class RDT2:
                 if int(recvCS, 2) != 0:
                     if (db == 1): print('ERROR: ACK msg corrupted.')
                     if (db == 1): print('Resending current packet...')
+                    # do nothing to allow packet resend to occur
                 # otherwise check the ACK msg
-                elif recvSn != sn:
+                elif recvSn != sn: 
                     if (db == 1): print('ERROR: Previous ACK received.')
                     if (db == 1): print('Resending current packet...')
+                    # do nothing to allow packet resend to occur
                 else:
                     # change goodAck to 1 to leave the send loop
                     goodAck = 1
