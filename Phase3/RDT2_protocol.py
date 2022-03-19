@@ -49,7 +49,17 @@ class RDT2:
             elif (sn == 1): sn = 0
             # create and send packet
             packet = self.packetize(msg, sn)
-            # MORE TO ADD
+            
+            ### everything in this chunk here is jj's addition (maja syntax error going on here)
+            self.UDPsocket.sendto(packet.encode(), receiver)
+            #receive the flag ACK from receiver
+            recvStart, serverAddress = self.UDPsocket.recvfrom(1024)
+            sendsFlag = int(recvStart.decode())
+            #if flag is received, make i - 1, to resend previous packet
+            if sendsFLAG == 1:
+                i = i - 1    # makes i in this loop one less, therefore sending previous packet again
+            ### MORE TO ADD ?
+            
         
     # data file receive
     def rdt_recv(self):
@@ -61,11 +71,43 @@ class RDT2:
         numRecv = 0
         # receive data packets and ACKnowledge reception from sender
         snLast = 1 # start iDlast as 1, since first packet iD will be 0
+        packetsReceived = [] ### list of packets that pass checks and are received successfully
         while (recvNum != numPack):
+            flag = 0 ### resets the flag and ACK that receiver sends to sender for each loop iteration
+            
             packet, svrAddr = self.UDPsocket.recvfrom(1029)
             # parse packet down into message, checksum, and identifier
             seqNum, recvCS, msgData = self.depacketize(packet)
-    
+            
+            ### everything in this chunk is jj's additions for checking seq num and checksums, and receiving packets (as well as sending an ack to sender)
+            #check sequence numbers:
+            if snLast == seqNum:
+                print('ERROR: Sequence numbers are the same.')
+                print('Resending packet...')
+                flag = 1
+                self.UDPsocket.sendto(flag.encode(), svrAddr)
+                #if this if was correct, the rest is skipped and the flag above is sent to resend the same packet
+                
+            #check checksums:
+            elif recsCS != 0 or recCS != '0':
+                print('ERROR: Checksums are different.')
+                print('Resending packet...')
+                flag = 1
+                self.UDPsocket.sendto(flag.encode(), svrAddr)
+                #if this elif was correct, the rest is skipped and the flag above is sent to resend the same packet
+                
+            #both checks pass, packet will be added to list
+            else:
+                recvNum += 1
+                packetsReceived.append(msgData)  # add packet to list of packets
+                if recvNum % 5 == 0:  # update user on packets for every 5, (or whatever number you want)
+                    print(str(recvNum) + ' packets received...')
+                if recvNum == numPack:  # break loop if all packets received
+                    print('All packets received!')
+                    break
+             ###
+            
+            
     # CREATE PACKET FUNCTION
     # "packetizes" data, checksum, and seq num into a single packet
     # first calculates the checksum of the data
