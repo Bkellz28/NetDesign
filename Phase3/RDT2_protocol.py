@@ -37,33 +37,50 @@ class RDT2:
             print('ERROR: packet list does not match estimated packet size')
             print('Ending send call...')
             return
-        elif (len(sendList) != numPack and db == 1):   ## '&&' should be 'and'
-            print('All packets successfully parsed...')
+        elif (len(sendList) == numPack and db == 1):   ## '&&' should be 'and'
+            print('Data successfully parsed into packets...')
         # send packet one at a time and wait for ACK response from server
         sn = 0 # init identifier as 0, will flip b/t 0 and 1
         for i in range(len(sendList)):
             # grab packet and append checksum and identifier
             msg = sendList[i] # grab packet
             # Corruption needs to be implemented after this line
-            if (sn == 0): sn = 1
-            elif (sn == 1): sn = 0
             # create and send packet
             packet = self.packetize(msg, sn)
-            
             ### everything in this chunk here is jj's addition (maja syntax error going on here)
-            self.UDPsocket.sendto(packet.encode(), receiver)
-            #receive the flag ACK from receiver
-            recvStart, serverAddress = self.UDPsocket.recvfrom(1024)
-            sendsFlag = int(recvStart.decode())
-            #if flag is received, make i - 1, to resend previous packet
-            if sendsFLAG == 1:
-                i = i - 1    # makes i in this loop one less, therefore sending previous packet again
-            ### MORE TO ADD ?
-            
+            goodAck = 0
+            while goodAck == 0:
+                self.UDPsocket.sendto(packet, receiver)
+                #receive ACK from receiver
+                recvPacket, recvAddr = self.UDPsocket.recvfrom(1024)
+                recvSn, recvCS, recvAck = self.depacketize(recvPacket)
+                ackNum = int(recvAck.hex(), 16)
+                #print('ACK' + str(recvSn) + ' RECEIVED!!')
+                # first verify integrity of msg with checksum
+                if int(recvCS, 2) != 0:
+                    if (db == 1): print('ERROR: ACK msg corrupted.')
+                    if (db == 1): print('Resending current packet...')
+                # otherwise check the ACK msg
+                elif recvSn != sn:
+                    if (db == 1): print('ERROR: Previous ACK received.')
+                    if (db == 1): print('Resending current packet...')
+                else:
+                    # change goodAck to 1 to leave the send loop
+                    goodAck = 1
+            # Data is acknowledged by sender, can move on to next packet
+            # flip seq num
+            if (sn == 0): sn = 1
+            elif (sn == 1): sn = 0
+            #print('DATA VERIFIED BY RECEIVER')
+            #time.sleep(5)
+        if (db == 1): print('All packets sent!')
         
     # data file receive
     def rdt_recv(self):
         db = self.debug # grab debug val
+        # create ACK data message
+        ackBi = binarySize('111', 64) # 64 bit uint 7
+        ack = int(ackBi, 2).to_bytes(8, byteorder = 'big', signed = False)
         # recv initial message that gives number of packets
         recvStart, serverAddress = self.UDPsocket.recvfrom(1024)
         numPack = int(recvStart.decode())
@@ -72,40 +89,50 @@ class RDT2:
         # receive data packets and ACKnowledge reception from sender
         snLast = 1 # start iDlast as 1, since first packet iD will be 0
         packetsReceived = [] ### list of packets that pass checks and are received successfully
+        recvNum = 0
         while (recvNum != numPack):
-            flag = 0 ### resets the flag and ACK that receiver sends to sender for each loop iteration
-            
             packet, svrAddr = self.UDPsocket.recvfrom(1029)
             # parse packet down into message, checksum, and identifier
             seqNum, recvCS, msgData = self.depacketize(packet)
             
             ### everything in this chunk is jj's additions for checking seq num and checksums, and receiving packets (as well as sending an ack to sender)
             #check sequence numbers:
-            if snLast == seqNum:
-                print('ERROR: Sequence numbers are the same.')
-                print('Resending packet...')
-                flag = 1
-                self.UDPsocket.sendto(flag.encode(), svrAddr)
+            if seqNum == snLast:
+                if (db == 1): print('ERROR: Sequence numbers are the same.')
+                if (db == 1): print('Sending ACK' + str(seqNum) + ' to sender...')
+                # ADD SEND PREV ACK LINE
                 #if this if was correct, the rest is skipped and the flag above is sent to resend the same packet
                 
             #check checksums:
-            elif recsCS != 0 or recCS != '0':
-                print('ERROR: Checksums are different.')
-                print('Resending packet...')
-                flag = 1
-                self.UDPsocket.sendto(flag.encode(), svrAddr)
+            elif int(recvCS, 2) != 0:
+                if (db == 1): print('ERROR: Corruption detected in packet.')
+                if (db == 1): print('Sending ACK' + str(snLast) + ' to sender...')
+                # ADD SEND PREV ACK LINE
                 #if this elif was correct, the rest is skipped and the flag above is sent to resend the same packet
                 
             #both checks pass, packet will be added to list
             else:
+                #print('GOOD PACKET RECEIVED')
+                # iterate recvNum and add packet to list of received packets
                 recvNum += 1
                 packetsReceived.append(msgData)  # add packet to list of packets
-                if recvNum % 5 == 0:  # update user on packets for every 5, (or whatever number you want)
+                if recvNum % 5 == 0 and db == 1:  # update user on packets for every 5, (or whatever number you want)
                     print(str(recvNum) + ' packets received...')
+                # send correct ACK to sender
+                if seqNum == 0: ackPacket = self.packetize(ack, 0)
+                elif seqNum == 1: ackPacket = self.packetize(ack, 1)
+                self.UDPsocket.sendto(ackPacket, svrAddr)
+                # iterate snLast
+                snLast = seqNum
                 if recvNum == numPack:  # break loop if all packets received
                     print('All packets received!')
                     break
-             ###
+                    
+        # combine list of data-pieces back into one single piece of data
+        dataReceived = packetsReceived[0]
+        for i in range(1, len(packetsReceived)):
+            dataReceived += packetsReceived[i] # construct packets back into data array
+        return dataReceived # return data
             
             
     # CREATE PACKET FUNCTION

@@ -27,7 +27,9 @@ print('Compare checksum2 to checksum1...')
 compare = checksum(data2, result)
 """
 
-Sender = RDT2('127.0.0.1', 10420)
+svr = '127.0.0.1'
+Sender = RDT2(svr, 10420, 1)
+'''
 # packetize and depacketize the same piece of data
 packet = Sender.packetize(byteData, 0)
 
@@ -44,4 +46,12 @@ print(recvCS)
 
 recvData = packet[5:]
 # print(recvData)
+'''
 
+filePath = input('Input path of image file: ')
+img = open(filePath, 'rb')  # open img
+imgData = img.read() # read data of img
+sendAddr = (svr, 10421) # assign receiver
+
+# RDT SEND TEST
+Sender.rdt_send(imgData, sendAddr)

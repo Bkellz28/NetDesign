@@ -21,7 +21,7 @@ def checksum(data, cmpSum = 0):
     # PART ONE: CALCULATE INITIAL CHECKSUM
     # check length and add leading zeros if necessary
     data = binarySize(data[2:], 8192)
-    print(len(data))
+    #print(len(data))
     # chop data into 32 bit sections
     bitList = []
     for i in range(256):
@@ -52,12 +52,12 @@ def checksum(data, cmpSum = 0):
         # addSum is now our checkSum
         checkSum = addSum
         # time.sleep(1)
-    print('Pre-flip checksum:   ' + checkSum)
+    #print('Pre-flip checksum:   ' + checkSum)
     
     # PART TWO: ADD COMPARE CHECKSUM IF INPUT AND INVERT
     # check if a comparison checksum was input
     if (cmpSum != 0):
-        print('Previous checksum:   ' + cmpSum)
+        #print('Previous checksum:   ' + cmpSum)
         # calculate comparison b/t calc and input checksums
         compSum = bin(int(checkSum, 2) + int(cmpSum, 2))
         # check for carry bit
@@ -68,12 +68,14 @@ def checksum(data, cmpSum = 0):
             # carry bit present, ignore it by indexing beyond it
             checkSum = compSum[3:]
     # INVERT BITS 
+    # add leading zeroes to checkSum if needed
+    checkSum = binarySize(checkSum, 32)
     inv = ''
     for i in range(32):
         if (checkSum[i] == '1'): inv += '0'
         else: inv += '1'
     checkSum = inv
-    print('Calculated checksum: ' + checkSum)
+    #print('Calculated checksum: ' + checkSum)
     
     return checkSum
       
