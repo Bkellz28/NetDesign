@@ -61,11 +61,13 @@ class RDT2:
                 if int(recvCS, 2) != 0:
                     if (db == 1): print('ERROR: ACK msg corrupted.')
                     if (db == 1): print('Resending current packet...')
-                    # do nothing to allow packet resend to occur
+                    # repacketize data and allow resend to occur
+                    packet = self.packetize(msg, sn)
                 # otherwise check the ACK msg
                 elif recvSn != sn: 
                     if (db == 1): print('ERROR: Previous ACK received.')
                     if (db == 1): print('Resending current packet...')
+                    packet = self.packetize(msg, sn)
                     # do nothing to allow packet resend to occur
                 else:
                     # change goodAck to 1 to leave the send loop
@@ -156,8 +158,11 @@ class RDT2:
         cs = checksum(dataBi) #calc checksum
         csBy = int(cs, 2).to_bytes(4, byteorder = 'big', signed = False)
         # DATA IS CORRUPTED AFTER CHECKSUM TO PROPERLY SIMULATE BIT ERROR
-        # NEED TO PUT THIS STATEMENT IN A PROPER IF STATEMENT
-        data = self.corrupt(data, 2, 10)
+        # FIRST INPUT AFTER DATA IS MODE (1, 2, or 3)
+        # SECOND INPUT IS % ERROR
+        
+        data = self.corrupt(data, 3, 80)
+        
         # create and return full packet
         packet = snBy + csBy + data
         #print(len(packet))
@@ -189,7 +194,7 @@ class RDT2:
     # Mode 3: data packet corruption, these packets are big, > 100 byte
     def corrupt(self, data, mode, thresh):
         # gen random num
-        randy = random.randrange(1, 50, 1)
+        randy = random.randrange(1, 100, 1)
         if (mode == 2 and len(data) < 100):
             if randy < thresh:
                 # CONVERT DATA TO BINARY AND FLIP SOME BITS
@@ -208,7 +213,7 @@ class RDT2:
         elif (mode == 3 and len(data) > 100):
             if randy < thresh:
                 # CONVERT DATA TO BINARY AND FLIP SOME BITS
-                print(len(data))
+                #print(len(data))
                 data = bin(int(data.hex(), 16))[2:]
                 crpt = ''
                 for i in range(64): # invert first 64bit=8byte
@@ -216,8 +221,8 @@ class RDT2:
                     else: crpt += '1'
                 corruptData = crpt + data[64:]
                 # THEN CONVERT BACK TO BYTES
-                corruptData = data.to_bytes(1024, byteorder = 'big', signed = False)
-                print(len(corruptData))
+                corruptData = int(corruptData, 2).to_bytes(1024, byteorder = 'big', signed = False)
+                #print(len(corruptData))
             else: corruptData = data
         else: # mode 1 or data that doesn't match current mode
             # no need to corrupt this data
