@@ -3,6 +3,8 @@ from CheckSumUtility import *
 from socket import *
 import time
 
+import random ### random num generator 
+
 
 # updated RDT protocol to rdt2.3
 class RDT2:
@@ -181,13 +183,33 @@ class RDT2:
     # Mode 3: data packet corruption, these packets are big, > 100 byte
     def corrupt(self, data, mode):
         if (mode == 2 and len(data) < 100):
+            randy = random.randrange(1, 100, 1)
+            if randy < 20:
             # CONVERT DATA TO BINARY AND FLIP SOME BITS
+            data = bin(int(data, 2)
+            for i in range(32):
+                if (data[i] == '1'): 
+                       data[i] = '0'
+                if (data[i] == '0'): 
+                       data[i] = '1'
+                i = i + 1 # this will skip and make it so the loop messes with every other bit
             # THEN CONVERT BACK TO BYTES
-            fart = 2
+            data = data.to_bytes(1, byteorder = 'big', signed = False)
+            
         elif (mode == 3 and len(data) > 100):
+            randy = random.randrange(1, 100, 1)
+            if randy < 20:
             # CONVERT DATA TO BINARY AND FLIP SOME BITS
+            data = bin(int(data, 2)
+            for i in range(32):
+                if (data[i] == '1'): 
+                       data[i] = '0'
+                if (data[i] == '0'): 
+                       data[i] = '1'
+                i = i + 1 # this will skip and make it so the loop messes with every other bit
             # THEN CONVERT BACK TO BYTES
-            fart = 2
+             data = data.to_bytes(1, byteorder = 'big', signed = False)
+            
         else: # mode 1 or data that doesn't match current mode
             # no need to corrupt this data
             corruptData = data
