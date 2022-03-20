@@ -1,6 +1,7 @@
 # import entire socket & rdt library for use
 from socket import *
 from RDT2_protocol import RDT2
+import time
 
 # initialize server info
 sndrName = '127.0.0.1'
@@ -18,5 +19,8 @@ while True:
     imgData = img.read() # read data of img
     sendAddr = (sndrName, 10421) # assign receiver
     print('Image sending...')
+    before = time.time()
     Sender.rdt_send(imgData, sendAddr)
-    print('Image sent!')
+    after = time.time()
+    totalTime = round(after-before, 3)
+    print('Image sent in ' + str(totalTime) + ' seconds!')
