@@ -2,7 +2,6 @@
 from CheckSumUtility import *
 from socket import *
 import time
-
 import random ### random num generator 
 
 
@@ -71,6 +70,8 @@ class RDT2:
                 else:
                     # change goodAck to 1 to leave the send loop
                     goodAck = 1
+                #time.sleep(1)
+            #print('Good ACK')
             # Data is acknowledged by sender, can move on to next packet
             # flip seq num
             if (sn == 0): sn = 1
@@ -102,16 +103,20 @@ class RDT2:
             ### everything in this chunk is jj's additions for checking seq num and checksums, and receiving packets (as well as sending an ack to sender)
             #check sequence numbers:
             if seqNum == snLast:
-                if (db == 1): print('ERROR: Sequence numbers are the same.')
+                if (db == 1): print('ERROR on pkt' + str(recvNum)+ ': Sequence numbers are the same.')
                 if (db == 1): print('Sending ACK' + str(seqNum) + ' to sender...')
-                # ADD SEND PREV ACK LINE
+                # sending prev ack
+                ackPacket = self.packetize(ack, seqNum)
+                self.UDPsocket.sendto(ackPacket, svrAddr)
                 #if this if was correct, the rest is skipped and the flag above is sent to resend the same packet
                 
             #check checksums:
             elif int(recvCS, 2) != 0:
-                if (db == 1): print('ERROR: Corruption detected in packet.')
+                if (db == 1): print('ERROR on pkt' + str(recvNum)+ ' Corruption detected in packet.')
                 if (db == 1): print('Sending ACK' + str(snLast) + ' to sender...')
-                # ADD SEND PREV ACK LINE
+                # send snLast ack
+                ackPacket = self.packetize(ack, snLast)
+                self.UDPsocket.sendto(ackPacket, svrAddr)
                 #if this elif was correct, the rest is skipped and the flag above is sent to resend the same packet
                 
             #both checks pass, packet will be added to list
@@ -152,9 +157,10 @@ class RDT2:
         csBy = int(cs, 2).to_bytes(4, byteorder = 'big', signed = False)
         # DATA IS CORRUPTED AFTER CHECKSUM TO PROPERLY SIMULATE BIT ERROR
         # NEED TO PUT THIS STATEMENT IN A PROPER IF STATEMENT
-        data = self.corrupt(data, 1)
+        data = self.corrupt(data, 2, 10)
         # create and return full packet
         packet = snBy + csBy + data
+        #print(len(packet))
         return packet
     
     # DECONSTRUCT PACKET FUNCTION
@@ -181,35 +187,38 @@ class RDT2:
     # Mode 1: no corruption
     # Mode 2: ACK packet corruption, these packets are small, < 100 byte
     # Mode 3: data packet corruption, these packets are big, > 100 byte
-    def corrupt(self, data, mode):
+    def corrupt(self, data, mode, thresh):
+        # gen random num
+        randy = random.randrange(1, 50, 1)
         if (mode == 2 and len(data) < 100):
-            randy = random.randrange(1, 100, 1)
-            if randy < 20:
-            # CONVERT DATA TO BINARY AND FLIP SOME BITS
-            data = bin(int(data, 2)
-            for i in range(32):
-                if (data[i] == '1'): 
-                       data[i] = '0'
-                if (data[i] == '0'): 
-                       data[i] = '1'
-                i = i + 1 # this will skip and make it so the loop messes with every other bit
-            # THEN CONVERT BACK TO BYTES
-            data = data.to_bytes(1, byteorder = 'big', signed = False)
-            
+            if randy < thresh:
+                # CONVERT DATA TO BINARY AND FLIP SOME BITS
+                #print(len(data))
+                data = bin(int(data.hex(), 16))[2:]
+                data = binarySize(data, 64)
+                crpt = ''
+                for i in range(64): # invert first 64bit=8byte
+                    if (data[i] == '1'): crpt += '0'
+                    else: crpt += '1'
+                corruptData = crpt + data[64:]
+                # THEN CONVERT BACK TO BYTES
+                corruptData = int(corruptData, 2).to_bytes(8, byteorder = 'big', signed = False)
+                #print(len(corruptData))
+            else: corruptData = data
         elif (mode == 3 and len(data) > 100):
-            randy = random.randrange(1, 100, 1)
-            if randy < 20:
-            # CONVERT DATA TO BINARY AND FLIP SOME BITS
-            data = bin(int(data, 2)
-            for i in range(32):
-                if (data[i] == '1'): 
-                       data[i] = '0'
-                if (data[i] == '0'): 
-                       data[i] = '1'
-                i = i + 1 # this will skip and make it so the loop messes with every other bit
-            # THEN CONVERT BACK TO BYTES
-             data = data.to_bytes(1, byteorder = 'big', signed = False)
-            
+            if randy < thresh:
+                # CONVERT DATA TO BINARY AND FLIP SOME BITS
+                print(len(data))
+                data = bin(int(data.hex(), 16))[2:]
+                crpt = ''
+                for i in range(64): # invert first 64bit=8byte
+                    if (data[i] == '1'): crpt += '0'
+                    else: crpt += '1'
+                corruptData = crpt + data[64:]
+                # THEN CONVERT BACK TO BYTES
+                corruptData = data.to_bytes(1024, byteorder = 'big', signed = False)
+                print(len(corruptData))
+            else: corruptData = data
         else: # mode 1 or data that doesn't match current mode
             # no need to corrupt this data
             corruptData = data
