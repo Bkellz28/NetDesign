@@ -44,3 +44,10 @@
 5. | Run both programs
    | 
 6. | Type image name with the file type and press enter.
+   |
+7. | ***IF YOU WISH TO CHANGE THE MODE (for the 3 different options with corruption):
+   | Look for the 'data = self.corrupt(data, x, 80)' line which is around line 164-167 of RDT2_protocol. 
+   | Change the x for the desired mode / option:
+   | Type 1: for Option 1 and no corruption
+   | Type 2: for Option 2 and ACK corruption
+   | Type 3: for Option 3 and Data pack error
