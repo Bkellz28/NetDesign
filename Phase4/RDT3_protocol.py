@@ -106,7 +106,6 @@ class RDT3:
             # parse packet down into message, checksum, and identifier
             seqNum, recvCS, msgData = self.depacketize(packet)
 
-            ### everything in this chunk is jj's additions for checking seq num and checksums, and receiving packets (as well as sending an ack to sender)
             # check sequence numbers:
             if seqNum == snLast:
                 if (db == 1): print('ERROR on pkt' + str(recvNum) + ': Sequence numbers are the same.')
