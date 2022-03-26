@@ -44,10 +44,10 @@
 6. | Type image name with the file type and press enter.
    |
 7. | ***IF YOU WISH TO CHANGE THE MODE (for the 3 different options with corruption):
-   | Look for the 'data = self.corrupt(data, x, 80)' line which is around line 164-167 of RDT2_protocol. 
+   | Look for the 'def __init__(self, hostName, portNum, timeoutVal=0, errorMode=1, debugToggle=0):' line which is on line 10 of RDT3_protocol. 
    | Change the x for the desired mode / option:
    | Type 1: for Option 1 and no corruption
    | Type 2: for Option 2 and ACK corruption
    | Type 3: for Option 3 and Data pack error
-   | Type 4: for Option ** ________________
-   | Type 5: for Option ** ________________
+   | Type 4: for Option *5* and Data packet loss
+   | Type 5: for Option *4* and ACK packet loss
