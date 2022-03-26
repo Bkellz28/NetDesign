@@ -61,7 +61,12 @@ class RDT3:
                     try: # attempt to receive ack
                         recvPacket, recvAddr = self.UDPsocket.recvfrom(1024)
                         # IMPLEMENT IGNORING OF ACK PACKET HERE, KEEP RESPONSE 0 SO WE DO TIMEOUT AGAIN
-                        response = 1 # this line is only reached when ack is received before timeout
+                        randy = random.randrange(1, 100, 1)
+                        if (self.erMode == 5 and randy < timeoutErrorPcnt):
+                            # DO NOTHING HERE TO SIMULATE LOSING THE ACK
+                            nothing = 1 # response will stay at 0
+                        else: # otherwise continue with good packet handling
+                            response = 1 # this line is only reached when ack is received before timeout
                     except: # handle timeout occurance
                         if (db == 1): print('ERROR: Sender timeout.')
                         if (db == 1): print('Resending current packet...')
