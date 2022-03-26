@@ -65,6 +65,7 @@ class RDT3:
                         if (self.erMode == 5 and randy < timeoutErrorPcnt):
                             # DO NOTHING HERE TO SIMULATE LOSING THE ACK
                             nothing = 1 # response will stay at 0
+                            print('ACK Packet lost, re-sending...')
                         else: # otherwise continue with good packet handling
                             response = 1 # this line is only reached when ack is received before timeout
                     except: # handle timeout occurance
