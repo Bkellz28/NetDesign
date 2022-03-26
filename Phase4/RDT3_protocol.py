@@ -241,11 +241,11 @@ class RDT3:
                 data = bin(int(data.hex(), 16))[2:]
                 data = binarySize(data, 64)
                 crpt = ''
-                for i in range(64):  # make all bits 0
-                    if (data[i] == '1'):
-                        crpt += '0'
-                    else:
-                        crpt += '1'
+                
+                stall = 0
+                while stall = 0:
+                    #does nothing, creates packet loss and waits for timeout to occur and kickback out
+                
                 corruptData = crpt + data[64:]
                 # THEN CONVERT BACK TO BYTES
                 corruptData = int(corruptData, 2).to_bytes(8, byteorder='big', signed=False)
@@ -258,11 +258,11 @@ class RDT3:
                 # print(len(data))
                 data = bin(int(data.hex(), 16))[2:]
                 crpt = ''
-                for i in range(64):  # make all bits 0
-                    if (data[i] == '1'):
-                        crpt += '0'
-                    else:
-                        crpt += '1'
+                
+                stall = 0
+                while stall = 0:
+                    #does nothing, creates packet loss and waits for timeout to occur and kickback out
+                    
                 corruptData = crpt + data[64:]
                 # THEN CONVERT BACK TO BYTES
                 corruptData = int(corruptData, 2).to_bytes(1024, byteorder='big', signed=False)
