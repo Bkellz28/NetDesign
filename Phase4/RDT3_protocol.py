@@ -7,13 +7,15 @@ from threading import Timer
 
 # updated RDT protocol to rdt2.3
 class RDT3:
-    def __init__(self, hostName, portNum, debugToggle=0):
+    def __init__(self, hostName, portNum, timeoutVal=0, errorMode=1, debugToggle=0):
         self.host = hostName
         self.port = portNum
         # open socket for use
         self.UDPsocket = socket(AF_INET, SOCK_DGRAM)
         # keep track of debugToggle (1 for debug messages, 0 for none)
         self.debug = debugToggle
+        self.timeout = timeoutVal
+        self.erMode = errorMode
 
     # data file send
     def rdt_send(self, sendData, receiver):
@@ -48,12 +50,22 @@ class RDT3:
             # Corruption needs to be implemented after this line
             # create and send packet
             packet = self.packetize(msg, sn)
-            ### everything in this chunk here is jj's addition
             goodAck = 0
+            response = 0
             while goodAck == 0:
-                self.UDPsocket.sendto(packet, receiver)
+                # set sender timeout if one was input
+                if (self.timeout != 0): self.UDPsocket.settimeout(self.timeout)
                 # receive ACK from receiver
-                recvPacket, recvAddr = self.UDPsocket.recvfrom(1024)
+                while response == 0:
+                    self.UDPsocket.sendto(packet, receiver)
+                    try: # attempt to receive ack
+                        recvPacket, recvAddr = self.UDPsocket.recvfrom(1024)
+                        response = 1 # this line is only reached when ack is received before timeout
+                    except: # handle timeout occurance
+                        if (db == 1): print('ERROR: Sender timeout.')
+                        if (db == 1): print('Resending current packet...')
+                        response = 0 # keep response 0 so resend occurs
+                # unpack receive packet
                 recvSn, recvCS, recvAck = self.depacketize(recvPacket)
                 ackNum = int(recvAck.hex(), 16)
                 # print('ACK' + str(recvSn) + ' RECEIVED!!')
@@ -73,7 +85,7 @@ class RDT3:
                     # change goodAck to 1 to leave the send loop
                     goodAck = 1
                 # time.sleep(1)
-            # print('Good ACK')
+            #print('Good ACK')
             # Data is acknowledged by sender, can move on to next packet
             # flip seq num
             if (sn == 0):
@@ -86,6 +98,10 @@ class RDT3:
 
     # data file receive
     def rdt_recv(self):
+        # TIMEOUT ERROR SIMULATION (ERROR MODE 4)
+        # ASSIGN PERCENT ERROR HERE (10% is huge, results in >5min send time)
+        timeoutErrorPcnt = 10
+        
         db = self.debug  # grab debug val
         # create ACK data message
         ackBi = binarySize('111', 64)  # 64 bit uint 7
@@ -103,7 +119,7 @@ class RDT3:
             packet, svrAddr = self.UDPsocket.recvfrom(1029)
             # parse packet down into message, checksum, and identifier
             seqNum, recvCS, msgData = self.depacketize(packet)
-
+            ackPacket = [] # initialize ackPacket outside of if-else handling
             # check sequence numbers:
             if seqNum == snLast:
                 if (db == 1): print('ERROR on pkt' + str(recvNum) + ': Sequence numbers are the same.')
@@ -124,23 +140,29 @@ class RDT3:
 
             # both checks pass, packet will be added to list
             else:
-                # print('GOOD PACKET RECEIVED')
-                # iterate recvNum and add packet to list of received packets
-                recvNum += 1
-                packetsReceived.append(msgData)  # add packet to list of packets
-                if recvNum % 5 == 0 and db == 1:  # update user on packets for every 5, (or whatever number you want)
-                    print(str(recvNum) + ' packets received...')
-                # send correct ACK to sender
-                if seqNum == 0:
-                    ackPacket = self.packetize(ack, 0)
-                elif seqNum == 1:
-                    ackPacket = self.packetize(ack, 1)
-                self.UDPsocket.sendto(ackPacket, svrAddr)
-                # iterate snLast
-                snLast = seqNum
-                if recvNum == numPack:  # break loop if all packets received
-                    print('All packets received!')
-                    break
+                # HANDLE TIMEOUT ERROR SIMULATION
+                randy = random.randrange(1, 100, 1)
+                if (self.erMode == 4 and randy < timeoutErrorPcnt):
+                    # DO NOTHING HERE TO SIMULATE LOSING THIS PACKET
+                    nothing = 1
+                else: # otherwise continue with good packet handling
+                    # print('GOOD PACKET RECEIVED')
+                    # iterate recvNum and add packet to list of received packets
+                    recvNum += 1
+                    packetsReceived.append(msgData)  # add packet to list of packets
+                    if recvNum % 5 == 0 and db == 1:  # update user on packets for every 5, (or whatever number you want)
+                        print(str(recvNum) + ' packets received...')
+                    # send correct ACK to sender
+                    if seqNum == 0:
+                        ackPacket = self.packetize(ack, 0)
+                    elif seqNum == 1:
+                        ackPacket = self.packetize(ack, 1)
+                    self.UDPsocket.sendto(ackPacket, svrAddr)
+                    # iterate snLast
+                    snLast = seqNum
+                    if recvNum == numPack:  # break loop if all packets received
+                        print('All packets received!')
+                        break
 
         # combine list of data-pieces back into one single piece of data
         dataReceived = packetsReceived[0]
@@ -160,10 +182,10 @@ class RDT3:
         cs = checksum(dataBi)  # calc checksum
         csBy = int(cs, 2).to_bytes(4, byteorder='big', signed=False)
         # DATA IS CORRUPTED AFTER CHECKSUM TO PROPERLY SIMULATE BIT ERROR
-        # FIRST INPUT AFTER DATA IS MODE (1, 2, or 3)
+        # FIRST INPUT AFTER DATA IS ERMODE INPUT FROM CONSTRUCTOR
         # SECOND INPUT IS % ERROR
 
-        data = self.corrupt(data, 3, 80)
+        data = self.corrupt(data, self.erMode, 80)
 
         # create and return full packet
         packet = snBy + csBy + data
@@ -194,8 +216,6 @@ class RDT3:
     # Mode 1: no corruption
     # Mode 2: ACK packet corruption, these packets are small, < 100 byte
     # Mode 3: data packet corruption, these packets are big, > 100 byte
-    # Mode 4: ACK packet loss, these packets are small, < 100 byte
-    # Mode 5: data packet loss, these packets are big, > 100 byte
     def corrupt(self, data, mode, thresh):
         # gen random num
         randy = random.randrange(1, 100, 1)
@@ -234,42 +254,7 @@ class RDT3:
                 # print(len(corruptData))
             else:
                 corruptData = data
-        if (mode == 4 and len(data) < 100):
-            if randy < thresh:
-                # CONVERT DATA TO BINARY and CREATE PACKET LOSS
-                # print(len(data))
-                data = bin(int(data.hex(), 16))[2:]
-                data = binarySize(data, 64)
-                crpt = ''
-                
-                stall = 0
-                while stall = 0:
-                    #does nothing, creates packet loss and waits for timeout to occur and kickback out
-                
-                corruptData = crpt + data[64:]
-                # THEN CONVERT BACK TO BYTES
-                corruptData = int(corruptData, 2).to_bytes(8, byteorder='big', signed=False)
-                # print(len(corruptData))
-            else:
-                corruptData = data
-        elif (mode == 5 and len(data) > 100):
-            if randy < thresh:
-                # CONVERT DATA TO BINARY AND FLIP SOME BITS
-                # print(len(data))
-                data = bin(int(data.hex(), 16))[2:]
-                crpt = ''
-                
-                stall = 0
-                while stall = 0:
-                    #does nothing, creates packet loss and waits for timeout to occur and kickback out
-                    
-                corruptData = crpt + data[64:]
-                # THEN CONVERT BACK TO BYTES
-                corruptData = int(corruptData, 2).to_bytes(1024, byteorder='big', signed=False)
-                # print(len(corruptData))
-            else:
-                corruptData = data
-        else:  # mode 1 or data that doesn't match current mode
+        else:  # mode 1, 4, 5, or data that doesn't match current mode
             # no need to corrupt this data
             corruptData = data
         return corruptData
