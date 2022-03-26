@@ -47,8 +47,6 @@ class RDT3:
             msg = sendList[i]  # grab packet
             # Corruption needs to be implemented after this line
             # create and send packet
-            t = Timer(20, self)
-            t.start()
             packet = self.packetize(msg, sn)
             ### everything in this chunk here is jj's addition
             goodAck = 0
@@ -246,6 +244,8 @@ class RDT3:
                 for i in range(64):  # make all bits 0
                     if (data[i] == '1'):
                         crpt += '0'
+                    else:
+                        crpt += '1'
                 corruptData = crpt + data[64:]
                 # THEN CONVERT BACK TO BYTES
                 corruptData = int(corruptData, 2).to_bytes(8, byteorder='big', signed=False)
@@ -261,6 +261,8 @@ class RDT3:
                 for i in range(64):  # make all bits 0
                     if (data[i] == '1'):
                         crpt += '0'
+                    else:
+                        crpt += '1'
                 corruptData = crpt + data[64:]
                 # THEN CONVERT BACK TO BYTES
                 corruptData = int(corruptData, 2).to_bytes(1024, byteorder='big', signed=False)
