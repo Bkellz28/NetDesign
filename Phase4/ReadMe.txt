@@ -18,8 +18,9 @@
 3. | image.bmp
    | Image that is being sent and received.
    | 
-4. | RDT2_protocol.py:
-   | This file handles the sending and receiving packets with headers. It uses both checksums and sequence numbers as well.
+4. | RDT3_protocol.py:
+   | This file handles the sending and receiving packets with headers. It uses both checksums and sequence numbers as part of the headers.  
+   | The file also contains a corrupting function for testing purposes.
    |
 5. | result.bmp
    | This file is made once the server receives the image and rebuilds it as result.bmp
@@ -48,5 +49,5 @@
      # 1ST & 2ND INPUTS: receiver name and port
      # 3RD INPUT: optional, message receive timeout number in seconds (mostly used for sender)
      # 4TH INPUT: optional, error simulation mode (1 is no errors and the default, 2-5 remaining options)
-     # 5TH INPUT: optional, debug mode (0 is very few feedback print messages and the default, 1 prints much more info to        terminal)
+     # 5TH INPUT: optional, debug mode (0 is very few feedback print messages and the default, 1 prints much more info to terminal)
 
