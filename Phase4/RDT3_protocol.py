@@ -19,6 +19,10 @@ class RDT3:
 
     # data file send
     def rdt_send(self, sendData, receiver):
+        # TIMEOUT ERROR SIMULATION (ERROR MODE 4)
+        # ASSIGN PERCENT ERROR HERE (10% is huge, results in >5min send time)
+        timeoutErrorPcnt = 10
+        
         db = self.debug  # grab debug val
         # calc num packets, data length / 1024 bytes
         length = len(sendData)
@@ -64,7 +68,7 @@ class RDT3:
                         randy = random.randrange(1, 100, 1)
                         if (self.erMode == 5 and randy < timeoutErrorPcnt):
                             # DO NOTHING HERE TO SIMULATE LOSING THE ACK
-                            nothing = 1 # response will stay at 0
+                            response = 0 # response will stay at 0
                             print('ACK Packet lost, re-sending...')
                         else: # otherwise continue with good packet handling
                             response = 1 # this line is only reached when ack is received before timeout

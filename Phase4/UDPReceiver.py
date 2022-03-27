@@ -12,7 +12,7 @@ rcvrPort = 10421
 # 3RD INPUT: optional, message receive timeout number in seconds (mostly used for sender)
 # 4TH INPUT: optional, error simulation mode (1 is no errors and the default, 2-5 remaining options)
 # 5TH INPUT: optional, debug mode (0 is very few feedback print messages and the default, 1 prints much more info to terminal)
-Receiver = RDT3(rcvrName, rcvrPort, 1, 4)
+Receiver = RDT3(rcvrName, rcvrPort, 1, 5, 1)
 # leaving first param blank allows for svr to rcv from other hosts
 Receiver.UDPsocket.bind(('', rcvrPort))
 
