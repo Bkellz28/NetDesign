@@ -43,11 +43,10 @@
    | 
 6. | Type image name with the file type and press enter.
    |
-7. | ***IF YOU WISH TO CHANGE THE MODE (for the 3 different options with corruption):
-   | Look for the 'def __init__(self, hostName, portNum, timeoutVal=0, errorMode=1, debugToggle=0):' line which is on line 10 of RDT3_protocol. 
-   | Change the x for the desired mode / option:
-   | Type 1: for Option 1 and no corruption
-   | Type 2: for Option 2 and ACK corruption
-   | Type 3: for Option 3 and Data pack error
-   | Type 4: for Option *5* and Data packet loss
-   | Type 5: for Option *4* and ACK packet loss
+7. | To change the error modes or the timeout timer, find line 16 on UDP.Sender that says
+     'Sender = RDT3(sndrName, sndrPort, 5, 4, 1)'
+     # 1ST & 2ND INPUTS: receiver name and port
+     # 3RD INPUT: optional, message receive timeout number in seconds (mostly used for sender)
+     # 4TH INPUT: optional, error simulation mode (1 is no errors and the default, 2-5 remaining options)
+     # 5TH INPUT: optional, debug mode (0 is very few feedback print messages and the default, 1 prints much more info to        terminal)
+
