@@ -5,6 +5,7 @@ import time
 import random
 from threading import Timer
 
+
 # updated RDT protocol to rdt2.3
 class RDT3:
     def __init__(self, hostName, portNum, timeoutVal=0, errorMode=1, debugToggle=0):
@@ -22,7 +23,7 @@ class RDT3:
         # TIMEOUT ERROR SIMULATION (ERROR MODE 4)
         # ASSIGN PERCENT ERROR HERE (10% is huge, results in >5min send time)
         timeoutErrorPcnt = 10
-        
+
         db = self.debug  # grab debug val
         # calc num packets, data length / 1024 bytes
         length = len(sendData)
@@ -62,20 +63,20 @@ class RDT3:
                 # receive ACK from receiver
                 while response == 0:
                     self.UDPsocket.sendto(packet, receiver)
-                    try: # attempt to receive ack
+                    try:  # attempt to receive ack
                         recvPacket, recvAddr = self.UDPsocket.recvfrom(1024)
                         # IMPLEMENT IGNORING OF ACK PACKET HERE, KEEP RESPONSE 0 SO WE DO TIMEOUT AGAIN
                         randy = random.randrange(1, 100, 1)
-                        if (self.erMode == 5 and randy < timeoutErrorPcnt):
+                        if (self.erMode == 4 and randy < timeoutErrorPcnt):
                             # DO NOTHING HERE TO SIMULATE LOSING THE ACK
-                            response = 0 # response will stay at 0
+                            response = 0  # response will stay at 0
                             print('ACK Packet lost, re-sending...')
-                        else: # otherwise continue with good packet handling
-                            response = 1 # this line is only reached when ack is received before timeout
-                    except: # handle timeout occurance
+                        else:  # otherwise continue with good packet handling
+                            response = 1  # this line is only reached when ack is received before timeout
+                    except:  # handle timeout occurance
                         if (db == 1): print('ERROR: Sender timeout.')
                         if (db == 1): print('Resending current packet...')
-                        response = 0 # keep response 0 so resend occurs
+                        response = 0  # keep response 0 so resend occurs
                 # unpack receive packet
                 recvSn, recvCS, recvAck = self.depacketize(recvPacket)
                 ackNum = int(recvAck.hex(), 16)
@@ -86,17 +87,19 @@ class RDT3:
                     if (db == 1): print('Resending current packet...')
                     # repacketize data and allow resend to occur
                     packet = self.packetize(msg, sn)
+                    response = 0
                 # otherwise check the ACK msg
                 elif recvSn != sn:
                     if (db == 1): print('ERROR: Previous ACK received.')
                     if (db == 1): print('Resending current packet...')
                     packet = self.packetize(msg, sn)
+                    response = 0
                     # do nothing to allow packet resend to occur
                 else:
                     # change goodAck to 1 to leave the send loop
                     goodAck = 1
                 # time.sleep(1)
-            #print('Good ACK')
+            # print('Good ACK')
             # Data is acknowledged by sender, can move on to next packet
             # flip seq num
             if (sn == 0):
@@ -112,7 +115,7 @@ class RDT3:
         # TIMEOUT ERROR SIMULATION (ERROR MODE 4)
         # ASSIGN PERCENT ERROR HERE (10% is huge, results in >5min send time)
         timeoutErrorPcnt = 10
-        
+
         db = self.debug  # grab debug val
         # create ACK data message
         ackBi = binarySize('111', 64)  # 64 bit uint 7
@@ -126,11 +129,11 @@ class RDT3:
         snLast = 1  # start iDlast as 1, since first packet iD will be 0
         packetsReceived = []  ### list of packets that pass checks and are received successfully
         recvNum = 0
-        while (recvNum != numPack):
+        while (recvNum <= numPack):
             packet, svrAddr = self.UDPsocket.recvfrom(1029)
             # parse packet down into message, checksum, and identifier
             seqNum, recvCS, msgData = self.depacketize(packet)
-            ackPacket = [] # initialize ackPacket outside of if-else handling
+            ackPacket = []  # initialize ackPacket outside of if-else handling
             # check sequence numbers:
             if seqNum == snLast:
                 if (db == 1): print('ERROR on pkt' + str(recvNum) + ': Sequence numbers are the same.')
@@ -153,10 +156,10 @@ class RDT3:
             else:
                 # HANDLE TIMEOUT ERROR SIMULATION
                 randy = random.randrange(1, 100, 1)
-                if (self.erMode == 4 and randy < timeoutErrorPcnt):
+                if (self.erMode == 5 and randy < timeoutErrorPcnt):
                     # DO NOTHING HERE TO SIMULATE LOSING THIS PACKET
                     nothing = 1
-                else: # otherwise continue with good packet handling
+                else:  # otherwise continue with good packet handling
                     # print('GOOD PACKET RECEIVED')
                     # iterate recvNum and add packet to list of received packets
                     recvNum += 1
@@ -269,6 +272,5 @@ class RDT3:
             # no need to corrupt this data
             corruptData = data
         return corruptData
-
 
 
