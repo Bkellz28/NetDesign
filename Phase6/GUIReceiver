@@ -1,0 +1,215 @@
+# import entire socket & rdt library for use
+import numpy as np
+import cv2 as cv
+from socket import *
+import random
+from CheckSumUtility import *
+
+
+# initialize server info
+rcvrName = '127.0.0.1'
+rcvrPort = 10421
+# create receiver primed for reliable data transfer and bind to local port
+
+class RDT3:
+    def __init__(self, hostName, portNum, frameSize, timeoutVal, errorMode=1, debugToggle=0):
+        self.host = hostName
+        self.port = portNum
+        # open socket for use
+        self.UDPsocket = socket(AF_INET, SOCK_DGRAM)
+        # keep track of debugToggle (1 for debug messages, 0 for none)
+        self.debug = debugToggle
+        self.timeout = timeoutVal
+        self.erMode = errorMode
+        self.frame = frameSize
+
+    def rdt_recv(self):
+        # TIMEOUT ERROR SIMULATION (ERROR MODE 4)
+        # ASSIGN PERCENT ERROR HERE (10% is huge, results in >5min send time)
+        errorPcnt = 10
+
+        db = self.debug  # grab debug val
+        # create ACK data message
+        ackBi = binarySize('111', 64)  # 64 bit uint 7
+        ack = int(ackBi, 2).to_bytes(8, byteorder='big', signed=False)
+        # recv initial message that gives number of packets
+        recvStart, serverAddress = self.UDPsocket.recvfrom(1024)
+        numPack = int(recvStart.decode())
+        if (db == 1): print(str(numPack) + ' packets incoming...')
+        numRecv = 0
+        # receive data packets and ACKnowledge reception from sender
+        snLast = -1  # start iDlast as 1, since first packet iD will be 0
+        packetsReceived = []  ### list of packets that pass checks and are received successfully
+        recvNum = 0
+        while (True):
+            packet, svrAddr = self.UDPsocket.recvfrom(1030)
+            # parse packet down into message, checksum, and identifier
+            seqNum, recvCS, msgData = self.depacketize(packet)
+            ackPacket = []  # initialize ackPacket outside of if-else handling
+            # check sequence numbers, discard if anything besides expected seqNum
+            if seqNum != (snLast + 1):
+                if (db == 1): print('ERROR: pkt' + str(seqNum) + ' received, expected pkt' + str(snLast + 1))
+                if (db == 1): print('Sending ACK' + str(snLast) + ' to sender...')
+                # sending prev ack
+                ackPacket = self.packetize(ack, snLast)
+                self.UDPsocket.sendto(ackPacket, svrAddr)
+                # if this if was correct, the rest is skipped and the flag above is sent to resend the same packet
+
+            # check checksums:
+            elif int(recvCS, 2) != 0:
+                if (db == 1): print('ERROR on pkt' + str(recvNum) + ' Corruption detected in packet.')
+                if (db == 1): print('Sending ACK' + str(snLast) + ' to sender...')
+                # send snLast ack
+                ackPacket = self.packetize(ack, snLast)
+                self.UDPsocket.sendto(ackPacket, svrAddr)
+                # if this elif was correct, the rest is skipped and the flag above is sent to resend the same packet
+
+            # both checks pass, packet will be added to list
+            else:
+                # HANDLE TIMEOUT ERROR SIMULATION
+                randy = random.randrange(1, 100, 1)
+                if (self.erMode == 5 and randy < errorPcnt):
+                    # DO NOTHING HERE TO SIMULATE LOSING THIS PACKET
+                    nothing = 1
+                else:  # otherwise continue with good packet handling
+                    # print('GOOD PACKET RECEIVED')
+                    # iterate recvNum and add packet to list of received packets
+                    recvNum += 1
+                    packetsReceived.append(msgData)  # add packet to list of packets
+                    if recvNum % 25 == 0 and db == 1:  # update user on packets for every 5, (or whatever number you want)
+                        print(str(recvNum) + ' packets received...')
+                    # send correct ACK to sender
+                    ackPacket = self.packetize(ack, seqNum)
+                    self.UDPsocket.sendto(ackPacket, svrAddr)
+                    # iterate snLast
+                    snLast = seqNum
+                    if recvNum == numPack:  # break loop if all packets received
+                        print('All packets received!')
+                        break
+
+        # combine list of data-pieces back into one single piece of data
+        dataReceived = packetsReceived[0]
+        for i in range(1, len(packetsReceived)):
+            dataReceived += packetsReceived[i]  # construct packets back into data array
+        return dataReceived  # return data
+
+    def packetize(self, data, sn):
+        # convert seq num to 2bytes
+        snBy = sn.to_bytes(2, byteorder='big', signed=False)
+        # convert data to bits for checksum calculation
+        dataBi = bin(int(data.hex(), 16))
+        # calculate and convert checksum to bytes
+        cs = checksum(dataBi)  # calc checksum
+        csBy = int(cs, 2).to_bytes(4, byteorder='big', signed=False)
+        # DATA IS CORRUPTED AFTER CHECKSUM TO PROPERLY SIMULATE BIT ERROR
+        # FIRST INPUT AFTER DATA IS ERMODE INPUT FROM CONSTRUCTOR
+        # SECOND INPUT IS % ERROR
+
+        data = self.corrupt(data, self.erMode, 10)
+
+        # create and return full packet
+        packet = snBy + csBy + data
+        # print(len(packet))
+        return packet
+
+    # DECONSTRUCT PACKET FUNCTION
+    # "depacketizes" data, checksum, and seq num
+    def depacketize(self, packet):
+        # grab raw pieces
+        snRaw = packet[0:2]
+        csRaw = packet[2:6]
+        msg = packet[6:]
+        # convert seq num back to integer
+        sn = int(snRaw.hex(), 16)
+        # convert received checksum to binary (cut off 0b binary string header)
+        recvCs = bin(int(csRaw.hex(), 16))[2:]  # [2:] skips '0b'
+        recvCs = binarySize(recvCs, 32)  # add leading 0s if needed
+        # calculate checksum of the data and compare to received checksum
+        msgBi = bin(int(msg.hex(), 16))
+        cs = checksum(msgBi, recvCs)
+        # return formatted seq num and header
+        # no need to format the msg data any further
+        return sn, cs, msg
+
+    # CORRUPTION FUNCTION
+    # 3 mode: 1, 2, and 3
+    # Mode 1: no corruption
+    # Mode 2: ACK packet corruption, these packets are small, < 100 byte
+    # Mode 3: data packet corruption, these packets are big, > 100 byte
+    def corrupt(self, data, mode, thresh):
+        # gen random num
+        randy = random.randrange(1, 100, 1)
+        if (mode == 2 and len(data) < 100):
+            if randy < thresh:
+                # CONVERT DATA TO BINARY AND FLIP SOME BITS
+                # print(len(data))
+                data = bin(int(data.hex(), 16))[2:]
+                data = binarySize(data, 64)
+                crpt = ''
+                for i in range(64):  # invert first 64bit=8byte
+                    if (data[i] == '1'):
+                        crpt += '0'
+                    else:
+                        crpt += '1'
+                corruptData = crpt + data[64:]
+                # THEN CONVERT BACK TO BYTES
+                corruptData = int(corruptData, 2).to_bytes(8, byteorder='big', signed=False)
+                # print(len(corruptData))
+            else:
+                corruptData = data
+        elif (mode == 3 and len(data) > 100):
+            if randy < thresh:
+                # CONVERT DATA TO BINARY AND FLIP SOME BITS
+                # print(len(data))
+                data = bin(int(data.hex(), 16))[2:]
+                crpt = ''
+                for i in range(64):  # invert first 64bit=8byte
+                    if (data[i] == '1'):
+                        crpt += '0'
+                    else:
+                        crpt += '1'
+                corruptData = crpt + data[64:]
+                # THEN CONVERT BACK TO BYTES
+                corruptData = int(corruptData, 2).to_bytes(1024, byteorder='big', signed=False)
+                # print(len(corruptData))
+            else:
+                corruptData = data
+        else:  # mode 1, 4, 5, or data that doesn't match current mode
+            # no need to corrupt this data
+            corruptData = data
+        return corruptData
+
+
+
+
+
+
+
+
+
+
+
+# 1ST & 2ND INPUTS: receiver name and port
+# 3RD INPUT: optional, message receive timeout number in seconds (mostly used for sender)
+# 4TH INPUT: optional, error simulation mode (1 is no errors and the default, 2-5 remaining options)
+# 5TH INPUT: optional, debug mode (0 is very few feedback print messages and the default, 1 prints much more info to terminal)
+Receiver = RDT3(rcvrName, rcvrPort, 0, 1, 1)
+# leaving first param blank allows for svr to rcv from other hosts
+Receiver.UDPsocket.bind(('', rcvrPort))
+
+# alert user that server is ready
+print("The receiver is ready")
+
+# server reads and modifies message
+# loop receive action for server
+while True:
+    # receive data from client
+    receivedData = Receiver.rdt_recv()
+    # arrange data back into img and save result
+    img = np.asarray(bytearray(receivedData), dtype=np.uint8)
+    img = cv.imdecode(img, cv.IMREAD_COLOR)
+    cv.imwrite("result.bmp", img)
+    # open result image!
+    print("Opening image: ")
+    cv.imshow('result.bmp', img)
+    cv.waitKey()
