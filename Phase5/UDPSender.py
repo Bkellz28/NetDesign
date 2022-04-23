@@ -10,10 +10,11 @@ sndrPort = 10420
 # create sender primed for reliable data transport and bind to local port
 
 # 1ST & 2ND INPUTS: receiver name and port
-# 3RD INPUT: optional, message receive timeout number in seconds (mostly used for sender)
-# 4TH INPUT: optional, error simulation mode (1 is no errors and the default, 2-5 remaining options)
-# 5TH INPUT: optional, debug mode (0 is very few feedback print messages and the default, 1 prints much more info to terminal)
-Sender = RDT3(sndrName, sndrPort, 0.03, 2, 1)
+# 3RD INPUT: go-back-n frame size
+# 4TH INPUT: message receive timeout number in seconds (mostly used for sender)
+# 5TH INPUT: optional, error simulation mode (1 is no errors and the default, 2-5 remaining options)
+# 6TH INPUT: optional, debug mode (0 is very few feedback print messages and the default, 1 prints much more info to terminal)
+Sender = RDT3(sndrName, sndrPort, 10, 0.03, 1, 1) # timeout of 0.03 is pretty good
 Sender.UDPsocket.bind(('', sndrPort))
 
 # loop client to allow for multiple file sends
