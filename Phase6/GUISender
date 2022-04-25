@@ -52,10 +52,6 @@ def tSend():
     prevL2.place(x=125, y=125)
     pathL2 = Label(root, text=imagepath, bg='white', fg='green')
     pathL2.place(x=125, y=75)
-    #arrowB = Label(root, text='->', font=("calibri", 50), bg='white')
-    #arrowB.place(x=315, y=200)
-
-
 
     img = open(imagepath, 'rb')  # open img
     imgData = img.read()  # read data of img
@@ -147,37 +143,7 @@ class RDT3:
                     nothing = 0
                 packet = self.packetize(msg, sn)
                 self.UDPsocket.sendto(packet, receiver)
-
-
-                # *************************************************************************************************
-                '''
-                passer = passer - 1
-                if maxPack - passer == 100:
-                    label4 = Label(root, text='Path Submitted!', bg='white', fg='white') # in white to clear
-                    label4.place(x=330, y=20)
-
-                if passer == -1:
-                    after = time.time()
-                    totalTime = round(after - before, 3)
-                    print('Image sent in ' + str(totalTime) + ' seconds!')
-                    sendPackL2 = Label(root, text='All Sent!', font=("calibri", 18), bg='white', fg='green', padx=20)
-                    sendPackL2.place(x=65, y=235)
-                    sendPackL3 = Label(root, text='Time spent:', font=("calibri", 12), bg='white', padx=20)
-                    sendPackL3.place(x=5, y=275)
-                    merge = str(totalTime) + ' seconds'
-                    sendPackL4 = Label(root, text=merge, font=("calibri", 12), bg='white', fg='blue')
-                    sendPackL4.place(x=110, y=275)
-
-                if passer > -1:
-                    sendPackL = Label(root, text=passer, font=("calibri", 18), bg='white', padx=20)
-                    sendPackL.place(x=75, y=235)
-
-                    recPackL = Label(root, text=maxPack-passer, font=("calibri", 18), bg='white', padx=20)
-                    recPackL.place(x=525, y=235)
-                '''
-                #*******************************************************************************************
-
-
+                
                 sn = sn + 1
                 # start timer if base of frame
                 if sn == base: sendTime = time.time()
