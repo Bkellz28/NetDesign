@@ -182,11 +182,19 @@ class RDT3:
 
                     passer = base
                     #passer = passer - 1
-                    if maxPack - passer == 100:
+                    if passer == 100:
                         label4 = Label(root, text='Path Submitted!', bg='white', fg='white')  # in white to clear
                         label4.place(x=330, y=20)
 
-                    if passer == -1:
+
+                    if passer < maxPack + 1:
+                        sendPackL = Label(root, text=maxPack - passer, font=("calibri", 18), bg='white', padx=20)
+                        sendPackL.place(x=75, y=235)
+
+                        recPackL = Label(root, text=passer, font=("calibri", 18), bg='white', padx=20)
+                        recPackL.place(x=525, y=235)
+
+                    if passer == maxPack:
                         after = time.time()
                         totalTime = round(after - before, 3)
                         print('Image sent in ' + str(totalTime) + ' seconds!')
@@ -198,13 +206,6 @@ class RDT3:
                         merge = str(totalTime) + ' seconds'
                         sendPackL4 = Label(root, text=merge, font=("calibri", 12), bg='white', fg='blue')
                         sendPackL4.place(x=110, y=275)
-
-                    if passer < maxPack + 1:
-                        sendPackL = Label(root, text=maxPack - passer, font=("calibri", 18), bg='white', padx=20)
-                        sendPackL.place(x=75, y=235)
-
-                        recPackL = Label(root, text=passer, font=("calibri", 18), bg='white', padx=20)
-                        recPackL.place(x=525, y=235)
 
 
 
