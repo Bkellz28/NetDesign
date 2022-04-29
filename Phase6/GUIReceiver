@@ -212,4 +212,4 @@ while True:
     # open result image!
     print("Opening image: ")
     cv.imshow('result.bmp', img)
-    cv.waitKey() 
+    cv.waitKey()
